@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="description" content="Elite challenge habit tracker for men">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Challenge Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="icon-192.png">
+</head>
+<body>
+    <div id="app">
+        <!-- Tab Content -->
+        <main id="content">
+            <!-- Challenge Setup Tab -->
+            <div id="tab-setup" class="tab-content active">
+                <div class="tab-header">
+                    <h1>Create Challenge</h1>
+                </div>
+                <div class="tab-body">
+                    <div id="setup-form" class="setup-form"></div>
+                </div>
+            </div>
+
+            <!-- Daily View Tab -->
+            <div id="tab-daily" class="tab-content">
+                <div class="tab-header">
+                    <h1>Today</h1>
+                </div>
+                <div class="tab-body">
+                    <div id="daily-content"></div>
+                </div>
+            </div>
+
+            <!-- Stats Tab -->
+            <div id="tab-stats" class="tab-content">
+                <div class="tab-header">
+                    <h1>Stats</h1>
+                </div>
+                <div class="tab-body">
+                    <div id="stats-content"></div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="tab-settings" class="tab-content">
+                <div class="tab-header">
+                    <h1>Settings</h1>
+                </div>
+                <div class="tab-body">
+                    <div id="settings-content"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav id="bottom-nav">
+            <button class="nav-item active" data-tab="setup">
+                <span class="nav-icon">⚡</span>
+                <span class="nav-label">Setup</span>
+            </button>
+            <button class="nav-item" data-tab="daily">
+                <span class="nav-icon">◉</span>
+                <span class="nav-label">Today</span>
+            </button>
+            <button class="nav-item" data-tab="stats">
+                <span class="nav-icon">◊</span>
+                <span class="nav-label">Stats</span>
+            </button>
+            <button class="nav-item" data-tab="settings">
+                <span class="nav-icon">◈</span>
+                <span class="nav-label">Settings</span>
+            </button>
+        </nav>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
