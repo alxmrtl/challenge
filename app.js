@@ -428,48 +428,48 @@ function renderDailyTab() {
   currentDate.setDate(startDate.getDate() + currentDayIndex);
 
   container.innerHTML = `
-    <!-- Day Navigation -->
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
-      <button onclick="navigateDay(-1)" ${currentDayIndex === 0 ? 'disabled' : ''}
-        style="width: 48px; height: 48px; background: var(--color-bg-secondary);
-        border: 1px solid var(--color-border); border-radius: var(--radius-sm);
-        font-size: 1.5rem; color: var(--color-text-primary);
-        ${currentDayIndex === 0 ? 'opacity: 0.3; cursor: not-allowed;' : ''}">
-        ←
-      </button>
+    <!-- Dashboard Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
 
-      <div class="text-center">
-        <div style="font-size: 0.875rem; color: var(--color-text-secondary); text-transform: uppercase;
-          letter-spacing: 0.1em; margin-bottom: 0.25rem;">
-          Day ${currentDayIndex + 1} of ${challenge.totalDays}
+      <!-- Day Info Card -->
+      <div class="card" style="padding: 0.875rem; display: flex; flex-direction: column; justify-content: space-between;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+          <button onclick="navigateDay(-1)" ${currentDayIndex === 0 ? 'disabled' : ''}
+            style="width: 32px; height: 32px; background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+            font-size: 1.125rem; color: var(--color-text-primary);
+            ${currentDayIndex === 0 ? 'opacity: 0.3; cursor: not-allowed;' : ''}">
+            ←
+          </button>
+          <button onclick="navigateDay(1)" ${currentDayIndex === challenge.totalDays - 1 ? 'disabled' : ''}
+            style="width: 32px; height: 32px; background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+            font-size: 1.125rem; color: var(--color-text-primary);
+            ${currentDayIndex === challenge.totalDays - 1 ? 'opacity: 0.3; cursor: not-allowed;' : ''}">
+            →
+          </button>
         </div>
-        <div style="font-size: 1rem; color: var(--color-text-primary);">
-          ${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+        <div style="text-align: center;">
+          <div style="line-height: 1;">
+            <span style="font-size: 2rem; font-weight: 700; color: var(--color-text-primary);">${currentDayIndex + 1}</span>
+            <span style="font-size: 0.875rem; color: var(--color-text-tertiary); margin-left: 0.25rem;">of ${challenge.totalDays}</span>
+          </div>
+          <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 0.375rem;">
+            ${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </div>
         </div>
       </div>
 
-      <button onclick="navigateDay(1)" ${currentDayIndex === challenge.totalDays - 1 ? 'disabled' : ''}
-        style="width: 48px; height: 48px; background: var(--color-bg-secondary);
-        border: 1px solid var(--color-border); border-radius: var(--radius-sm);
-        font-size: 1.5rem; color: var(--color-text-primary);
-        ${currentDayIndex === challenge.totalDays - 1 ? 'opacity: 0.3; cursor: not-allowed;' : ''}">
-        →
-      </button>
-    </div>
-
-    <!-- Progress Ring -->
-    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 3rem;">
-      <div style="position: relative; width: 200px; height: 200px;">
-        <svg width="200" height="200" viewBox="0 0 200 200" style="transform: rotate(-90deg);">
-          <!-- Background circle -->
-          <circle cx="100" cy="100" r="85" fill="none" stroke="var(--color-bg-tertiary)" stroke-width="12"/>
-          <!-- Progress circle -->
-          <circle cx="100" cy="100" r="85" fill="none"
+      <!-- Progress Card -->
+      <div class="card" style="padding: 0.875rem; display: flex; align-items: center; justify-content: center; position: relative;">
+        <svg width="120" height="120" viewBox="0 0 120 120" style="transform: rotate(-90deg);">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--color-bg-tertiary)" stroke-width="8"/>
+          <circle cx="60" cy="60" r="50" fill="none"
             stroke="url(#progressGradient)"
-            stroke-width="12"
+            stroke-width="8"
             stroke-linecap="round"
-            stroke-dasharray="${2 * Math.PI * 85}"
-            stroke-dashoffset="${2 * Math.PI * 85 * (1 - progressPercent / 100)}"
+            stroke-dasharray="${2 * Math.PI * 50}"
+            stroke-dashoffset="${2 * Math.PI * 50 * (1 - progressPercent / 100)}"
             style="transition: stroke-dashoffset 0.5s ease;"/>
           <defs>
             <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -478,52 +478,51 @@ function renderDailyTab() {
             </linearGradient>
           </defs>
         </svg>
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-          text-align: center;">
-          <div style="font-size: 3rem; font-weight: 700; line-height: 1;
+        <div style="position: absolute; text-align: center;">
+          <div style="font-size: 1.75rem; font-weight: 700; line-height: 1;
             background: linear-gradient(135deg, var(--color-maroon) 0%, var(--color-gold) 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
             ${Math.round(progressPercent)}%
           </div>
-          <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-top: 0.5rem;">
-            ${completedCount} of ${totalTasks}
+          <div style="font-size: 0.65rem; color: var(--color-text-tertiary); margin-top: 0.25rem;">
+            ${completedCount}/${totalTasks}
           </div>
         </div>
       </div>
-
-      ${pointEarned ? `
-        <div style="margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: var(--color-gold-subtle);
-          border: 1px solid var(--color-gold); border-radius: var(--radius-md);
-          color: var(--color-gold); font-weight: 600; font-size: 0.875rem;
-          text-transform: uppercase; letter-spacing: 0.05em;">
-          ⭐ Point Earned
-        </div>
-      ` : ''}
     </div>
 
+    ${pointEarned ? `
+      <div style="margin-bottom: 1rem; padding: 0.5rem 1rem; background: var(--color-gold-subtle);
+        border: 1px solid var(--color-gold); border-radius: var(--radius-md);
+        color: var(--color-gold); font-weight: 600; font-size: 0.75rem;
+        text-transform: uppercase; letter-spacing: 0.05em; text-align: center;">
+        ⭐ Point Earned
+      </div>
+    ` : ''}
+
     <!-- Tasks -->
-    <div style="margin-bottom: 2rem;">
+    <div style="margin-bottom: 1.5rem;">
       ${challenge.tasks.map((task, index) => {
         const isCompleted = dayCompletion[index] || false;
         return `
-          <div class="card" style="cursor: pointer; margin-bottom: 1rem;
+          <div class="card" style="cursor: pointer; margin-bottom: 0.5rem; padding: 0.625rem;
             ${isCompleted ? 'background: var(--color-bg-tertiary);' : ''}"
             onclick="toggleTask(${index})">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-              <div style="width: 48px; height: 48px; border-radius: var(--radius-sm);
+            <div style="display: flex; align-items: center; gap: 0.625rem;">
+              <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); flex-shrink: 0;
                 background: ${isCompleted ? 'linear-gradient(135deg, var(--color-maroon) 0%, var(--color-gold) 100%)' : 'var(--color-bg-tertiary)'};
                 border: 2px solid ${isCompleted ? 'var(--color-gold)' : 'var(--color-border)'};
                 display: flex; align-items: center; justify-content: center;
-                font-size: 1.5rem; transition: all var(--transition-base);">
+                font-size: 1.125rem; transition: all var(--transition-base);">
                 ${isCompleted ? '✓' : task.emoji}
               </div>
-              <div style="flex: 1;">
-                <div style="font-weight: 600; font-size: 1rem;
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; font-size: 0.875rem; line-height: 1.3;
                   ${isCompleted ? 'text-decoration: line-through; opacity: 0.7;' : ''}">
                   ${task.name}
                 </div>
                 ${task.description ? `
-                  <div class="text-secondary" style="font-size: 0.875rem; margin-top: 0.25rem;">
+                  <div class="text-secondary" style="font-size: 0.7rem; margin-top: 0.125rem; line-height: 1.3;">
                     ${task.description}
                   </div>
                 ` : ''}
