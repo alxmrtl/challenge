@@ -164,37 +164,42 @@ function renderSetupTab() {
     // No challenge - show creation form
     container.innerHTML = `
       <form id="challenge-form">
-        <div class="input-group">
-          <label class="input-label">Challenge Duration</label>
-          <div class="input-number">
-            <button type="button" onclick="adjustDays(-1)">−</button>
-            <input type="number" id="input-days" value="30" min="1" max="365" readonly>
-            <button type="button" onclick="adjustDays(1)">+</button>
+        <button type="submit" class="btn-primary mb-lg" id="start-btn" disabled>
+          <span>Start Challenge</span>
+        </button>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+          <div class="input-group" style="margin-bottom: 0;">
+            <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.375rem;">Duration</label>
+            <div class="input-number" style="padding: 0.375rem;">
+              <button type="button" onclick="adjustDays(-1)" style="width: 32px; height: 32px; font-size: 1rem;">−</button>
+              <input type="number" id="input-days" value="30" min="1" max="365" readonly
+                style="font-size: 1rem; font-weight: 600;">
+              <button type="button" onclick="adjustDays(1)" style="width: 32px; height: 32px; font-size: 1rem;">+</button>
+            </div>
+            <p class="text-secondary" style="font-size: 0.65rem; margin-top: 0.375rem;">Days</p>
           </div>
-          <p class="text-secondary" style="font-size: 0.75rem; margin-top: 0.5rem;">Number of days for this challenge</p>
+
+          <div class="input-group" style="margin-bottom: 0;">
+            <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.375rem;">Threshold</label>
+            <div class="input-number" style="padding: 0.375rem;">
+              <button type="button" onclick="adjustThreshold(-1)" style="width: 32px; height: 32px; font-size: 1rem;">−</button>
+              <input type="number" id="input-threshold" value="1" min="1" max="10" readonly
+                style="font-size: 1rem; font-weight: 600;">
+              <button type="button" onclick="adjustThreshold(1)" style="width: 32px; height: 32px; font-size: 1rem;">+</button>
+            </div>
+            <p class="text-secondary" style="font-size: 0.65rem; margin-top: 0.375rem;">Tasks/point</p>
+          </div>
         </div>
 
-        <div class="input-group">
-          <label class="input-label">Point Threshold</label>
-          <div class="input-number">
-            <button type="button" onclick="adjustThreshold(-1)">−</button>
-            <input type="number" id="input-threshold" value="1" min="1" max="10" readonly>
-            <button type="button" onclick="adjustThreshold(1)">+</button>
-          </div>
-          <p class="text-secondary" style="font-size: 0.75rem; margin-top: 0.5rem;">Tasks to complete for daily point</p>
-        </div>
-
-        <div style="margin: 2rem 0;">
-          <label class="input-label">Daily Tasks</label>
+        <div style="margin-top: 1.5rem;">
+          <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.5rem;">Daily Tasks</label>
           <div id="tasks-container"></div>
-          <button type="button" class="btn-secondary mt-md" onclick="addTask()">
+          <button type="button" class="btn-secondary" onclick="addTask()"
+            style="padding: 0.625rem 1rem; font-size: 0.875rem; margin-top: 0.5rem;">
             <span>+ Add Task</span>
           </button>
         </div>
-
-        <button type="submit" class="btn-primary">
-          <span>Start Challenge</span>
-        </button>
       </form>
     `;
 
@@ -205,6 +210,9 @@ function renderSetupTab() {
 
     // Form submission
     document.getElementById('challenge-form').addEventListener('submit', handleChallengeSubmit);
+
+    // Initial button state
+    updateStartButton();
   }
 }
 
@@ -232,27 +240,29 @@ function addTask() {
   const taskId = taskCount++;
 
   const taskHtml = `
-    <div class="card task-item" data-task-id="${taskId}" style="margin-bottom: 1rem;">
-      <div style="display: flex; gap: 1rem; align-items: flex-start;">
+    <div class="card task-item" data-task-id="${taskId}" style="margin-bottom: 0.5rem; padding: 0.75rem;">
+      <div style="display: flex; gap: 0.625rem; align-items: flex-start;">
         <button type="button" class="emoji-btn" onclick="openEmojiPicker(${taskId})"
-          style="font-size: 2rem; padding: 0.5rem; background: var(--color-bg-tertiary);
-          border-radius: var(--radius-sm); min-width: 60px; height: 60px; display: flex;
-          align-items: center; justify-content: center;">
+          style="font-size: 1.25rem; padding: 0.375rem; background: var(--color-bg-tertiary);
+          border-radius: var(--radius-sm); min-width: 44px; height: 44px; display: flex;
+          align-items: center; justify-content: center; flex-shrink: 0;">
           <span id="emoji-${taskId}">💪</span>
         </button>
-        <div style="flex: 1;">
+        <div style="flex: 1; min-width: 0;">
           <input type="text" class="input-field mb-sm" placeholder="Task name"
-            id="task-name-${taskId}" required style="font-weight: 600;">
+            id="task-name-${taskId}" required onchange="updateStartButton()"
+            style="font-weight: 600; padding: 0.5rem; font-size: 0.875rem;">
           <input type="text" class="input-field" placeholder="Description (optional)"
-            id="task-desc-${taskId}">
+            id="task-desc-${taskId}" style="padding: 0.5rem; font-size: 0.75rem;">
         </div>
         <button type="button" onclick="removeTask(${taskId})"
-          style="color: var(--color-text-tertiary); font-size: 1.5rem; padding: 0.25rem;">×</button>
+          style="color: var(--color-text-tertiary); font-size: 1.25rem; padding: 0.25rem; flex-shrink: 0;">×</button>
       </div>
     </div>
   `;
 
   container.insertAdjacentHTML('beforeend', taskHtml);
+  updateStartButton();
 }
 
 function removeTask(taskId) {
@@ -260,6 +270,25 @@ function removeTask(taskId) {
   if (task) {
     task.remove();
   }
+  updateStartButton();
+}
+
+function updateStartButton() {
+  const startBtn = document.getElementById('start-btn');
+  if (!startBtn) return;
+
+  const tasks = [];
+  document.querySelectorAll('.task-item').forEach(item => {
+    const id = item.dataset.taskId;
+    const name = document.getElementById(`task-name-${id}`)?.value.trim();
+    if (name) {
+      tasks.push(name);
+    }
+  });
+
+  startBtn.disabled = tasks.length === 0;
+  startBtn.style.opacity = tasks.length === 0 ? '0.5' : '1';
+  startBtn.style.cursor = tasks.length === 0 ? 'not-allowed' : 'pointer';
 }
 
 function handleChallengeSubmit(e) {
@@ -325,18 +354,18 @@ function openEmojiPicker(taskId) {
       backdrop-filter: blur(10px); animation: fadeIn 0.2s ease;">
       <div onclick="event.stopPropagation()"
         style="background: var(--color-bg-secondary); border-radius: var(--radius-lg);
-        padding: var(--space-xl); max-width: 90%; max-height: 80vh; overflow-y: auto;
+        padding: 1.25rem; max-width: 90%; max-height: 80vh; overflow-y: auto;
         border: 1px solid var(--color-border); box-shadow: var(--shadow-lg);">
 
-        <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Select Emoji</h3>
+        <h3 style="margin-bottom: 1rem; font-size: 1.125rem;">Select Emoji</h3>
 
         ${Object.entries(EMOJI_CATEGORIES).map(([category, emojis]) => `
-          <div style="margin-bottom: 1.5rem;">
-            <div class="input-label" style="margin-bottom: 0.75rem;">${category}</div>
-            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem;">
+          <div style="margin-bottom: 1rem;">
+            <div class="input-label" style="margin-bottom: 0.5rem; font-size: 0.7rem;">${category}</div>
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.375rem;">
               ${emojis.map(emoji => `
                 <button type="button" onclick="selectEmoji('${emoji}')"
-                  style="font-size: 2rem; padding: 0.75rem; background: var(--color-bg-tertiary);
+                  style="font-size: 1.5rem; padding: 0.5rem; background: var(--color-bg-tertiary);
                   border-radius: var(--radius-sm); transition: all var(--transition-fast);"
                   onmouseover="this.style.background='var(--color-bg-elevated)'; this.style.transform='scale(1.1)'"
                   onmouseout="this.style.background='var(--color-bg-tertiary)'; this.style.transform='scale(1)'">
