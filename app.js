@@ -432,31 +432,74 @@ function renderDailyTab() {
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
 
       <!-- Day Info Card -->
-      <div class="card" style="padding: 0.875rem; display: flex; flex-direction: column; justify-content: space-between;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+      <div class="card" style="padding: 0.75rem; display: flex; flex-direction: column; justify-content: space-between;">
+        <!-- Top: Day X of X -->
+        <div style="text-align: center; margin-bottom: 0.5rem;">
+          <div style="font-size: 0.65rem; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.125rem;">
+            Day
+          </div>
+          <div style="line-height: 1;">
+            <span style="font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary);">${currentDayIndex + 1}</span>
+            <span style="font-size: 0.75rem; color: var(--color-text-tertiary);"> of ${challenge.totalDays}</span>
+          </div>
+        </div>
+
+        <!-- Middle: Progress Grid -->
+        <div style="margin-bottom: 0.5rem;">
+          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;">
+            ${Array.from({ length: Math.min(challenge.totalDays, 35) }, (_, i) => {
+              const completions = Store.getCompletions();
+              const dayComp = completions[i] || {};
+              const tasksCompleted = Object.values(dayComp).filter(Boolean).length;
+              const totalTasks = challenge.tasks.length;
+              const completion = totalTasks > 0 ? tasksCompleted / totalTasks : 0;
+
+              let bgColor = 'var(--color-bg-tertiary)';
+              if (completion === 1) {
+                bgColor = 'var(--color-gold)';
+              } else if (completion >= 0.5) {
+                bgColor = 'var(--color-maroon)';
+              } else if (completion > 0) {
+                bgColor = 'var(--color-maroon-dark)';
+              }
+
+              const isCurrent = i === currentDayIndex;
+              const isFuture = i > currentDayIndex;
+
+              return `
+                <div style="aspect-ratio: 1; background: ${isFuture ? 'var(--color-bg-elevated)' : bgColor};
+                  border-radius: 2px;
+                  ${isCurrent ? 'border: 1.5px solid var(--color-gold);' : 'border: 1px solid var(--color-border-subtle);'}">
+                </div>
+              `;
+            }).join('')}
+          </div>
+          ${challenge.totalDays > 35 ? `
+            <div style="font-size: 0.6rem; color: var(--color-text-tertiary); text-align: center; margin-top: 0.25rem;">
+              Showing first 35 days
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Bottom: Date with Arrows -->
+        <div style="display: flex; align-items: center; justify-content: space-between;">
           <button onclick="navigateDay(-1)" ${currentDayIndex === 0 ? 'disabled' : ''}
-            style="width: 32px; height: 32px; background: var(--color-bg-tertiary);
+            style="width: 28px; height: 28px; background: var(--color-bg-tertiary);
             border: 1px solid var(--color-border); border-radius: var(--radius-sm);
-            font-size: 1.125rem; color: var(--color-text-primary);
+            font-size: 1rem; color: var(--color-text-primary);
             ${currentDayIndex === 0 ? 'opacity: 0.3; cursor: not-allowed;' : ''}">
             ←
           </button>
+          <div style="font-size: 0.7rem; color: var(--color-text-secondary); text-align: center;">
+            ${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </div>
           <button onclick="navigateDay(1)" ${currentDayIndex === challenge.totalDays - 1 ? 'disabled' : ''}
-            style="width: 32px; height: 32px; background: var(--color-bg-tertiary);
+            style="width: 28px; height: 28px; background: var(--color-bg-tertiary);
             border: 1px solid var(--color-border); border-radius: var(--radius-sm);
-            font-size: 1.125rem; color: var(--color-text-primary);
+            font-size: 1rem; color: var(--color-text-primary);
             ${currentDayIndex === challenge.totalDays - 1 ? 'opacity: 0.3; cursor: not-allowed;' : ''}">
             →
           </button>
-        </div>
-        <div style="text-align: center;">
-          <div style="line-height: 1;">
-            <span style="font-size: 2rem; font-weight: 700; color: var(--color-text-primary);">${currentDayIndex + 1}</span>
-            <span style="font-size: 0.875rem; color: var(--color-text-tertiary); margin-left: 0.25rem;">of ${challenge.totalDays}</span>
-          </div>
-          <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 0.375rem;">
-            ${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </div>
         </div>
       </div>
 
