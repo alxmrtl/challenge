@@ -244,7 +244,7 @@ function renderChallengeForm(challenge, isEditing) {
         </div>
       ` : ''}
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
         <button type="submit" class="btn-primary" id="start-btn" ${!isEditing ? 'disabled' : ''}
           style="grid-column: 1 / 2;">
           <span>${isEditing ? 'Save Changes' : 'Create Challenge'}</span>
