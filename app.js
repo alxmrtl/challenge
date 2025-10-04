@@ -237,98 +237,109 @@ function renderChallengeForm(challenge, isEditing) {
   container.innerHTML = `
     <form id="challenge-form">
       ${isEditing && daysUntilStart > 0 ? `
-        <div style="text-align: center; margin-bottom: 1rem; padding: 0.75rem; background: var(--color-maroon-subtle); border: 1px solid var(--color-maroon); border-radius: var(--radius-md);">
-          <div style="font-size: 0.75rem; color: var(--color-maroon); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+        <div style="text-align: center; margin-bottom: 0.75rem; padding: 0.5rem; background: var(--color-maroon-subtle); border: 1px solid var(--color-maroon); border-radius: var(--radius-md);">
+          <div style="font-size: 0.65rem; color: var(--color-maroon); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
             Starts in ${daysUntilStart} day${daysUntilStart !== 1 ? 's' : ''}
           </div>
         </div>
       ` : ''}
 
       <!-- Start Challenge Button - Outside Grid -->
-      <button type="submit" class="btn-primary mb-lg" id="start-btn" ${!isEditing ? 'disabled' : ''}>
+      <button type="submit" class="btn-primary mb-md" id="start-btn" ${!isEditing ? 'disabled' : ''}
+        style="padding: 0.625rem; font-size: 0.875rem;">
         <span>${isEditing ? 'Save Changes' : 'Start Challenge'}</span>
       </button>
 
-      <!-- 2x2 Grid -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+      <!-- Challenge Settings Section -->
+      <div style="margin-bottom: 1.25rem;">
+        <h3 style="font-size: 0.875rem; font-weight: 700; color: var(--color-text-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; border-bottom: 2px solid var(--color-maroon); padding-bottom: 0.375rem;">
+          Challenge Settings
+        </h3>
 
-        <!-- Top Left: Start Date -->
-        <div class="input-group" style="margin-bottom: 0;">
-          <div style="margin-bottom: 0.5rem;">
-            <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-primary); text-transform: uppercase; letter-spacing: 0.05em;">
-              Start Date
+        <!-- 2x2 Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem;">
+
+          <!-- Top Left: Start Date -->
+          <div class="input-group" style="margin-bottom: 0;">
+            <div style="margin-bottom: 0.375rem; display: flex; justify-content: space-between; align-items: baseline; gap: 0.25rem;">
+              <div style="font-size: 0.625rem; font-weight: 700; color: var(--color-text-primary); text-transform: uppercase; letter-spacing: 0.05em;">
+                Start Date
+              </div>
+              <div style="font-size: 0.5rem; color: var(--color-text-tertiary);">
+                When begins
+              </div>
             </div>
-            <div style="font-size: 0.65rem; color: var(--color-text-tertiary); margin-top: 0.125rem;">
-              When challenge begins
+            <input type="date" id="input-start-date" class="input-field"
+              value="${challenge?.startDate || today}"
+              min="${today}"
+              style="padding: 0.375rem; font-size: 0.7rem; font-weight: 600; width: 100%; height: 36px;">
+          </div>
+
+          <!-- Top Right: Point Reward -->
+          <div class="input-group" style="margin-bottom: 0;">
+            <div style="margin-bottom: 0.375rem; display: flex; justify-content: space-between; align-items: baseline; gap: 0.25rem;">
+              <div style="font-size: 0.625rem; font-weight: 700; color: var(--color-text-primary); text-transform: uppercase; letter-spacing: 0.05em;">
+                Point Reward
+              </div>
+              <div style="font-size: 0.5rem; color: var(--color-text-tertiary);">
+                Per day
+              </div>
+            </div>
+            <div class="input-number" style="padding: 0.25rem; height: 36px;">
+              <button type="button" onclick="adjustPoints(-1)" style="width: 28px; height: 28px; font-size: 0.875rem;">−</button>
+              <input type="number" id="input-points" value="${challenge?.pointReward || 1}" min="1" max="10" readonly
+                style="font-size: 1rem; font-weight: 700;">
+              <button type="button" onclick="adjustPoints(1)" style="width: 28px; height: 28px; font-size: 0.875rem;">+</button>
             </div>
           </div>
-          <input type="date" id="input-start-date" class="input-field"
-            value="${challenge?.startDate || today}"
-            min="${today}"
-            style="padding: 0.625rem; font-size: 0.875rem; text-align: center; font-weight: 600;">
+
+          <!-- Bottom Left: Duration -->
+          <div class="input-group" style="margin-bottom: 0;">
+            <div style="margin-bottom: 0.375rem; display: flex; justify-content: space-between; align-items: baseline; gap: 0.25rem;">
+              <div style="font-size: 0.625rem; font-weight: 700; color: var(--color-text-primary); text-transform: uppercase; letter-spacing: 0.05em;">
+                Duration
+              </div>
+              <div style="font-size: 0.5rem; color: var(--color-text-tertiary);">
+                Total days
+              </div>
+            </div>
+            <div class="input-number" style="padding: 0.25rem; height: 36px;">
+              <button type="button" onclick="adjustDays(-1)" style="width: 28px; height: 28px; font-size: 0.875rem;">−</button>
+              <input type="number" id="input-days" value="${challenge?.totalDays || 30}" min="1" max="365" readonly
+                style="font-size: 1rem; font-weight: 700;">
+              <button type="button" onclick="adjustDays(1)" style="width: 28px; height: 28px; font-size: 0.875rem;">+</button>
+            </div>
+          </div>
+
+          <!-- Bottom Right: Daily Goal (Threshold) -->
+          <div class="input-group" style="margin-bottom: 0;">
+            <div style="margin-bottom: 0.375rem; display: flex; justify-content: space-between; align-items: baseline; gap: 0.25rem;">
+              <div style="font-size: 0.625rem; font-weight: 700; color: var(--color-text-primary); text-transform: uppercase; letter-spacing: 0.05em;">
+                Daily Goal
+              </div>
+              <div style="font-size: 0.5rem; color: var(--color-text-tertiary);">
+                Tasks needed
+              </div>
+            </div>
+            <div class="input-number" style="padding: 0.25rem; height: 36px;">
+              <button type="button" onclick="adjustThreshold(-1)" style="width: 28px; height: 28px; font-size: 0.875rem;">−</button>
+              <input type="number" id="input-threshold" value="${challenge?.pointThreshold || 1}" min="1" max="10" readonly
+                style="font-size: 1rem; font-weight: 700;">
+              <button type="button" onclick="adjustThreshold(1)" style="width: 28px; height: 28px; font-size: 0.875rem;">+</button>
+            </div>
+          </div>
+
         </div>
-
-        <!-- Top Right: Point Reward -->
-        <div class="input-group" style="margin-bottom: 0;">
-          <div style="margin-bottom: 0.5rem;">
-            <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-primary); text-transform: uppercase; letter-spacing: 0.05em;">
-              Point Reward
-            </div>
-            <div style="font-size: 0.65rem; color: var(--color-text-tertiary); margin-top: 0.125rem;">
-              Points earned per day
-            </div>
-          </div>
-          <div class="input-number" style="padding: 0.5rem;">
-            <button type="button" onclick="adjustPoints(-1)" style="width: 36px; height: 36px; font-size: 1.125rem;">−</button>
-            <input type="number" id="input-points" value="${challenge?.pointReward || 1}" min="1" max="10" readonly
-              style="font-size: 1.25rem; font-weight: 700;">
-            <button type="button" onclick="adjustPoints(1)" style="width: 36px; height: 36px; font-size: 1.125rem;">+</button>
-          </div>
-        </div>
-
-        <!-- Bottom Left: Duration -->
-        <div class="input-group" style="margin-bottom: 0;">
-          <div style="margin-bottom: 0.5rem;">
-            <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-primary); text-transform: uppercase; letter-spacing: 0.05em;">
-              Duration
-            </div>
-            <div style="font-size: 0.65rem; color: var(--color-text-tertiary); margin-top: 0.125rem;">
-              Total days in challenge
-            </div>
-          </div>
-          <div class="input-number" style="padding: 0.5rem;">
-            <button type="button" onclick="adjustDays(-1)" style="width: 36px; height: 36px; font-size: 1.125rem;">−</button>
-            <input type="number" id="input-days" value="${challenge?.totalDays || 30}" min="1" max="365" readonly
-              style="font-size: 1.25rem; font-weight: 700;">
-            <button type="button" onclick="adjustDays(1)" style="width: 36px; height: 36px; font-size: 1.125rem;">+</button>
-          </div>
-        </div>
-
-        <!-- Bottom Right: Daily Goal (Threshold) -->
-        <div class="input-group" style="margin-bottom: 0;">
-          <div style="margin-bottom: 0.5rem;">
-            <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-primary); text-transform: uppercase; letter-spacing: 0.05em;">
-              Daily Goal
-            </div>
-            <div style="font-size: 0.65rem; color: var(--color-text-tertiary); margin-top: 0.125rem;">
-              Tasks needed for point
-            </div>
-          </div>
-          <div class="input-number" style="padding: 0.5rem;">
-            <button type="button" onclick="adjustThreshold(-1)" style="width: 36px; height: 36px; font-size: 1.125rem;">−</button>
-            <input type="number" id="input-threshold" value="${challenge?.pointThreshold || 1}" min="1" max="10" readonly
-              style="font-size: 1.25rem; font-weight: 700;">
-            <button type="button" onclick="adjustThreshold(1)" style="width: 36px; height: 36px; font-size: 1.125rem;">+</button>
-          </div>
-        </div>
-
       </div>
 
-      <div style="margin-top: 1.5rem;">
-        <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.5rem;">Daily Tasks</label>
+      <!-- Daily Tasks Section -->
+      <div>
+        <h3 style="font-size: 0.875rem; font-weight: 700; color: var(--color-text-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; border-bottom: 2px solid var(--color-maroon); padding-bottom: 0.375rem;">
+          Daily Tasks
+        </h3>
         <div id="tasks-container"></div>
         <button type="button" class="btn-secondary" onclick="addTask()"
-          style="padding: 0.625rem 1rem; font-size: 0.875rem; margin-top: 0.5rem;">
+          style="padding: 0.5rem 0.875rem; font-size: 0.75rem; margin-top: 0.5rem;">
           <span>+ Add Task</span>
         </button>
       </div>
@@ -386,11 +397,11 @@ function addTask(taskData = null) {
   const taskId = taskCount++;
 
   const taskHtml = `
-    <div class="card task-item" data-task-id="${taskId}" style="margin-bottom: 0.5rem; padding: 0.75rem;">
-      <div style="display: flex; gap: 0.625rem; align-items: flex-start;">
+    <div class="card task-item" data-task-id="${taskId}" style="margin-bottom: 0.375rem; padding: 0.5rem;">
+      <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
         <button type="button" class="emoji-btn" onclick="openEmojiPicker(${taskId})"
-          style="font-size: 1.25rem; padding: 0.375rem; background: var(--color-bg-tertiary);
-          border-radius: var(--radius-sm); min-width: 44px; height: 44px; display: flex;
+          style="font-size: 1rem; padding: 0.25rem; background: var(--color-bg-tertiary);
+          border-radius: var(--radius-sm); min-width: 36px; height: 36px; display: flex;
           align-items: center; justify-content: center; flex-shrink: 0;">
           <span id="emoji-${taskId}">${taskData?.emoji || '💪'}</span>
         </button>
@@ -398,14 +409,14 @@ function addTask(taskData = null) {
           <input type="text" class="input-field mb-sm" placeholder="Task name"
             id="task-name-${taskId}" required onchange="updateStartButton()"
             value="${taskData?.name || ''}"
-            style="font-weight: 600; padding: 0.5rem; font-size: 0.875rem;">
+            style="font-weight: 600; padding: 0.375rem; font-size: 0.75rem;">
           <input type="text" class="input-field" placeholder="Description (optional)"
             id="task-desc-${taskId}"
             value="${taskData?.description || ''}"
-            style="padding: 0.5rem; font-size: 0.75rem;">
+            style="padding: 0.375rem; font-size: 0.65rem;">
         </div>
         <button type="button" onclick="removeTask(${taskId})"
-          style="color: var(--color-text-tertiary); font-size: 1.25rem; padding: 0.25rem; flex-shrink: 0;">×</button>
+          style="color: var(--color-text-tertiary); font-size: 1rem; padding: 0.125rem; flex-shrink: 0;">×</button>
       </div>
     </div>
   `;
