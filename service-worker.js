@@ -1,4 +1,4 @@
-const CACHE_NAME = 'challenge-tracker-v1';
+const CACHE_NAME = 'challenge-tracker-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -31,6 +31,16 @@ self.addEventListener('activate', event => {
           }
         })
       );
+    }).then(() => {
+      // Take control immediately
+      return self.clients.claim();
     })
   );
+});
+
+// Handle skip waiting message
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

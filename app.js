@@ -944,10 +944,35 @@ function confirmClearAll() {
 
 // ==================== App Initialization ====================
 document.addEventListener('DOMContentLoaded', () => {
-  // Register service worker
+  // Register service worker with update handling
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        // Check for updates periodically
+        setInterval(() => {
+          registration.update();
+        }, 60000); // Check every minute
+
+        // Handle updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New version available
+              if (confirm('New version available! Reload to update?')) {
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+                window.location.reload();
+              }
+            }
+          });
+        });
+      })
       .catch(err => console.log('Service worker registration failed:', err));
+
+    // Reload when new service worker takes over
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
   }
 
   // Setup navigation
