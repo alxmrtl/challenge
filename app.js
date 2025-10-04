@@ -435,12 +435,8 @@ function renderDailyTab() {
       <div class="card" style="padding: 0.75rem; display: flex; flex-direction: column; justify-content: space-between;">
         <!-- Top: Day X of X -->
         <div style="text-align: center; margin-bottom: 0.5rem;">
-          <div style="font-size: 0.65rem; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.125rem;">
-            Day
-          </div>
-          <div style="line-height: 1;">
-            <span style="font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary);">${currentDayIndex + 1}</span>
-            <span style="font-size: 0.75rem; color: var(--color-text-tertiary);"> of ${challenge.totalDays}</span>
+          <div style="font-size: 0.875rem; font-weight: 600; color: var(--color-text-primary);">
+            Day ${currentDayIndex + 1} of ${challenge.totalDays}
           </div>
         </div>
 
@@ -522,6 +518,11 @@ function renderDailyTab() {
           </defs>
         </svg>
         <div style="position: absolute; text-align: center;">
+          ${pointEarned ? `
+            <div style="font-size: 0.6rem; color: var(--color-gold); font-weight: 600; margin-bottom: 0.25rem;">
+              ⭐ POINT
+            </div>
+          ` : ''}
           <div style="font-size: 1.75rem; font-weight: 700; line-height: 1;
             background: linear-gradient(135deg, var(--color-maroon) 0%, var(--color-gold) 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
@@ -533,15 +534,6 @@ function renderDailyTab() {
         </div>
       </div>
     </div>
-
-    ${pointEarned ? `
-      <div style="margin-bottom: 1rem; padding: 0.5rem 1rem; background: var(--color-gold-subtle);
-        border: 1px solid var(--color-gold); border-radius: var(--radius-md);
-        color: var(--color-gold); font-weight: 600; font-size: 0.75rem;
-        text-transform: uppercase; letter-spacing: 0.05em; text-align: center;">
-        ⭐ Point Earned
-      </div>
-    ` : ''}
 
     <!-- Tasks -->
     <div style="margin-bottom: 1.5rem;">
