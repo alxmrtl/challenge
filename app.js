@@ -7,11 +7,11 @@ const DateUtils = {
     return today;
   },
 
-  // Parse ISO date string to Date object at midnight
+  // Parse ISO date string to Date object at midnight (local timezone)
   parseDate(dateString) {
-    const date = new Date(dateString);
-    date.setHours(0, 0, 0, 0);
-    return date;
+    // Parse ISO date in local timezone (not UTC)
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day, 0, 0, 0, 0);
   },
 
   // Format date to ISO string (YYYY-MM-DD)
