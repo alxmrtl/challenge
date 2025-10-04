@@ -269,10 +269,12 @@ function renderChallengeForm(challenge, isEditing) {
                 When begins
               </div>
             </div>
-            <input type="date" id="input-start-date" class="input-field"
-              value="${challenge?.startDate || today}"
-              min="${today}"
-              style="padding: 0.375rem; font-size: 0.7rem; font-weight: 600; width: 100%; height: 36px;">
+            <div style="display: flex; align-items: center; background: var(--color-bg-tertiary); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0.25rem; height: 36px; box-sizing: border-box;">
+              <input type="date" id="input-start-date"
+                value="${challenge?.startDate || today}"
+                min="${today}"
+                style="flex: 1; background: transparent; border: none; outline: none; padding: 0; font-size: 0.7rem; font-weight: 600; color: var(--color-text-primary); text-align: center; box-sizing: border-box;">
+            </div>
           </div>
 
           <!-- Top Right: Point Reward -->
