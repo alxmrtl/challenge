@@ -1,3 +1,37 @@
+// ==================== Date Utilities ====================
+const DateUtils = {
+  // Get today's date at midnight (local timezone)
+  getToday() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  },
+
+  // Parse ISO date string to Date object at midnight
+  parseDate(dateString) {
+    const date = new Date(dateString);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  },
+
+  // Format date to ISO string (YYYY-MM-DD)
+  toISODate(date) {
+    return date.toISOString().split('T')[0];
+  },
+
+  // Get days between two dates
+  daysBetween(date1, date2) {
+    const diffTime = date2 - date1;
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  },
+
+  // Format date for display
+  formatDisplay(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+};
+
 // ==================== Data Store ====================
 const Store = {
   // Get active challenge
@@ -6,7 +40,7 @@ const Store = {
     return data ? JSON.parse(data) : null;
   },
 
-  // Save active challenge (immutable once started)
+  // Save challenge (can edit if pending, locked if active)
   saveChallenge(challenge) {
     localStorage.setItem('activeChallenge', JSON.stringify(challenge));
   },
@@ -69,15 +103,40 @@ const Store = {
     const challenge = this.getChallenge();
     if (!challenge) return 0;
 
-    const startDate = new Date(challenge.startDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    startDate.setHours(0, 0, 0, 0);
+    const startDate = DateUtils.parseDate(challenge.startDate);
+    const today = DateUtils.getToday();
+    const daysPassed = DateUtils.daysBetween(startDate, today);
 
-    const diffTime = today - startDate;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return Math.max(0, Math.min(daysPassed, challenge.totalDays - 1));
+  },
 
-    return Math.max(0, Math.min(diffDays, challenge.totalDays - 1));
+  // Get challenge status
+  getChallengeStatus() {
+    const challenge = this.getChallenge();
+    if (!challenge) return null;
+
+    const startDate = DateUtils.parseDate(challenge.startDate);
+    const today = DateUtils.getToday();
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + challenge.totalDays);
+
+    if (today < startDate) {
+      return 'pending';
+    } else if (today >= endDate) {
+      return 'completed';
+    } else {
+      return 'active';
+    }
+  },
+
+  // Get days until start (negative if started)
+  getDaysUntilStart() {
+    const challenge = this.getChallenge();
+    if (!challenge) return 0;
+
+    const startDate = DateUtils.parseDate(challenge.startDate);
+    const today = DateUtils.getToday();
+    return DateUtils.daysBetween(today, startDate);
   }
 };
 
@@ -129,13 +188,14 @@ function renderCurrentTab() {
 function renderSetupTab() {
   const container = document.getElementById('setup-form');
   const challenge = Store.getChallenge();
+  const status = Store.getChallengeStatus();
 
-  if (challenge) {
-    // Challenge already exists - show summary
+  if (challenge && status === 'active') {
+    // Active challenge - locked, show summary
     container.innerHTML = `
       <div class="card">
         <h2 style="margin-bottom: 1rem; font-size: 1.5rem;">Active Challenge</h2>
-        <p class="text-secondary mb-md">${challenge.totalDays} days • ${challenge.tasks.length} tasks</p>
+        <p class="text-secondary mb-md">${challenge.totalDays} days • ${challenge.tasks.length} tasks • Started ${DateUtils.formatDisplay(challenge.startDate)}</p>
 
         <div style="margin-top: 1.5rem;">
           ${challenge.tasks.map(task => `
@@ -157,61 +217,96 @@ function renderSetupTab() {
       </div>
 
       <div class="text-center text-secondary" style="margin-top: 2rem;">
-        <p>Challenge is active. Visit Settings to unlock or archive.</p>
+        <p>Challenge is active. Visit Settings to archive.</p>
       </div>
     `;
+  } else if (challenge && status === 'pending') {
+    // Pending challenge - can edit
+    renderChallengeForm(challenge, true);
   } else {
     // No challenge - show creation form
-    container.innerHTML = `
-      <form id="challenge-form">
-        <button type="submit" class="btn-primary mb-lg" id="start-btn" disabled>
-          <span>Start Challenge</span>
+    renderChallengeForm(null, false);
+  }
+}
+
+function renderChallengeForm(challenge, isEditing) {
+  const container = document.getElementById('setup-form');
+  const today = DateUtils.toISODate(DateUtils.getToday());
+  const daysUntilStart = challenge ? Store.getDaysUntilStart() : 0;
+
+  container.innerHTML = `
+    <form id="challenge-form">
+      ${isEditing && daysUntilStart > 0 ? `
+        <div style="text-align: center; margin-bottom: 1rem; padding: 0.75rem; background: var(--color-maroon-subtle); border: 1px solid var(--color-maroon); border-radius: var(--radius-md);">
+          <div style="font-size: 0.75rem; color: var(--color-maroon); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+            Starts in ${daysUntilStart} day${daysUntilStart !== 1 ? 's' : ''}
+          </div>
+        </div>
+      ` : ''}
+
+      <button type="submit" class="btn-primary mb-lg" id="start-btn" ${!isEditing ? 'disabled' : ''}>
+        <span>${isEditing ? 'Save Changes' : 'Create Challenge'}</span>
+      </button>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+        <div class="input-group" style="margin-bottom: 0;">
+          <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.375rem;">Duration</label>
+          <div class="input-number" style="padding: 0.375rem;">
+            <button type="button" onclick="adjustDays(-1)" style="width: 32px; height: 32px; font-size: 1rem;">−</button>
+            <input type="number" id="input-days" value="${challenge?.totalDays || 30}" min="1" max="365" readonly
+              style="font-size: 1rem; font-weight: 600;">
+            <button type="button" onclick="adjustDays(1)" style="width: 32px; height: 32px; font-size: 1rem;">+</button>
+          </div>
+          <p class="text-secondary" style="font-size: 0.65rem; margin-top: 0.375rem;">Days</p>
+        </div>
+
+        <div class="input-group" style="margin-bottom: 0;">
+          <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.375rem;">Threshold</label>
+          <div class="input-number" style="padding: 0.375rem;">
+            <button type="button" onclick="adjustThreshold(-1)" style="width: 32px; height: 32px; font-size: 1rem;">−</button>
+            <input type="number" id="input-threshold" value="${challenge?.pointThreshold || 1}" min="1" max="10" readonly
+              style="font-size: 1rem; font-weight: 600;">
+            <button type="button" onclick="adjustThreshold(1)" style="width: 32px; height: 32px; font-size: 1rem;">+</button>
+          </div>
+          <p class="text-secondary" style="font-size: 0.65rem; margin-top: 0.375rem;">Tasks/pt</p>
+        </div>
+
+        <div class="input-group" style="margin-bottom: 0;">
+          <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.375rem;">Start Date</label>
+          <input type="date" id="input-start-date" class="input-field"
+            value="${challenge?.startDate || today}"
+            min="${today}"
+            style="padding: 0.5rem; font-size: 0.75rem; text-align: center; font-weight: 600;">
+          <p class="text-secondary" style="font-size: 0.65rem; margin-top: 0.375rem;">Begin</p>
+        </div>
+      </div>
+
+      <div style="margin-top: 1.5rem;">
+        <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.5rem;">Daily Tasks</label>
+        <div id="tasks-container"></div>
+        <button type="button" class="btn-secondary" onclick="addTask()"
+          style="padding: 0.625rem 1rem; font-size: 0.875rem; margin-top: 0.5rem;">
+          <span>+ Add Task</span>
         </button>
+      </div>
+    </form>
+  `;
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
-          <div class="input-group" style="margin-bottom: 0;">
-            <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.375rem;">Duration</label>
-            <div class="input-number" style="padding: 0.375rem;">
-              <button type="button" onclick="adjustDays(-1)" style="width: 32px; height: 32px; font-size: 1rem;">−</button>
-              <input type="number" id="input-days" value="30" min="1" max="365" readonly
-                style="font-size: 1rem; font-weight: 600;">
-              <button type="button" onclick="adjustDays(1)" style="width: 32px; height: 32px; font-size: 1rem;">+</button>
-            </div>
-            <p class="text-secondary" style="font-size: 0.65rem; margin-top: 0.375rem;">Days</p>
-          </div>
-
-          <div class="input-group" style="margin-bottom: 0;">
-            <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.375rem;">Threshold</label>
-            <div class="input-number" style="padding: 0.375rem;">
-              <button type="button" onclick="adjustThreshold(-1)" style="width: 32px; height: 32px; font-size: 1rem;">−</button>
-              <input type="number" id="input-threshold" value="1" min="1" max="10" readonly
-                style="font-size: 1rem; font-weight: 600;">
-              <button type="button" onclick="adjustThreshold(1)" style="width: 32px; height: 32px; font-size: 1rem;">+</button>
-            </div>
-            <p class="text-secondary" style="font-size: 0.65rem; margin-top: 0.375rem;">Tasks/point</p>
-          </div>
-        </div>
-
-        <div style="margin-top: 1.5rem;">
-          <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.5rem;">Daily Tasks</label>
-          <div id="tasks-container"></div>
-          <button type="button" class="btn-secondary" onclick="addTask()"
-            style="padding: 0.625rem 1rem; font-size: 0.875rem; margin-top: 0.5rem;">
-            <span>+ Add Task</span>
-          </button>
-        </div>
-      </form>
-    `;
-
+  // Populate existing tasks if editing
+  if (challenge && challenge.tasks) {
+    challenge.tasks.forEach(task => {
+      addTask(task);
+    });
+  } else {
     // Initialize with one empty task
-    if (document.querySelectorAll('.task-item').length === 0) {
-      addTask();
-    }
+    addTask();
+  }
 
-    // Form submission
-    document.getElementById('challenge-form').addEventListener('submit', handleChallengeSubmit);
+  // Form submission
+  document.getElementById('challenge-form').addEventListener('submit', handleChallengeSubmit);
 
-    // Initial button state
+  // Initial button state
+  if (!isEditing) {
     updateStartButton();
   }
 }
@@ -235,7 +330,7 @@ function adjustThreshold(delta) {
   }
 }
 
-function addTask() {
+function addTask(taskData = null) {
   const container = document.getElementById('tasks-container');
   const taskId = taskCount++;
 
@@ -246,14 +341,17 @@ function addTask() {
           style="font-size: 1.25rem; padding: 0.375rem; background: var(--color-bg-tertiary);
           border-radius: var(--radius-sm); min-width: 44px; height: 44px; display: flex;
           align-items: center; justify-content: center; flex-shrink: 0;">
-          <span id="emoji-${taskId}">💪</span>
+          <span id="emoji-${taskId}">${taskData?.emoji || '💪'}</span>
         </button>
         <div style="flex: 1; min-width: 0;">
           <input type="text" class="input-field mb-sm" placeholder="Task name"
             id="task-name-${taskId}" required onchange="updateStartButton()"
+            value="${taskData?.name || ''}"
             style="font-weight: 600; padding: 0.5rem; font-size: 0.875rem;">
           <input type="text" class="input-field" placeholder="Description (optional)"
-            id="task-desc-${taskId}" style="padding: 0.5rem; font-size: 0.75rem;">
+            id="task-desc-${taskId}"
+            value="${taskData?.description || ''}"
+            style="padding: 0.5rem; font-size: 0.75rem;">
         </div>
         <button type="button" onclick="removeTask(${taskId})"
           style="color: var(--color-text-tertiary); font-size: 1.25rem; padding: 0.25rem; flex-shrink: 0;">×</button>
@@ -296,6 +394,7 @@ function handleChallengeSubmit(e) {
 
   const totalDays = parseInt(document.getElementById('input-days').value);
   const pointThreshold = parseInt(document.getElementById('input-threshold').value);
+  const startDate = document.getElementById('input-start-date').value;
 
   const tasks = [];
   document.querySelectorAll('.task-item').forEach(item => {
@@ -323,7 +422,8 @@ function handleChallengeSubmit(e) {
     totalDays,
     pointThreshold,
     tasks,
-    startDate: new Date().toISOString()
+    startDate, // ISO date string (YYYY-MM-DD)
+    createdAt: new Date().toISOString()
   };
 
   Store.saveChallenge(challenge);
@@ -401,16 +501,22 @@ function closeEmojiPicker() {
 function renderDailyTab() {
   const container = document.getElementById('daily-content');
   const challenge = Store.getChallenge();
+  const status = Store.getChallengeStatus();
 
   if (!challenge) {
     container.innerHTML = `
       <div class="text-center" style="margin-top: 4rem;">
-        <p class="text-secondary">No active challenge</p>
+        <p class="text-secondary">No challenge created</p>
         <button class="btn-primary mt-lg" onclick="switchTab('setup')" style="max-width: 200px; margin: 1.5rem auto 0;">
           <span>Create Challenge</span>
         </button>
       </div>
     `;
+    return;
+  }
+
+  if (status === 'pending') {
+    renderDailyTabPending(challenge);
     return;
   }
 
@@ -567,6 +673,120 @@ function renderDailyTab() {
         `;
       }).join('')}
     </div>
+  `;
+}
+
+function renderDailyTabPending(challenge) {
+  const container = document.getElementById('daily-content');
+  const daysUntilStart = Store.getDaysUntilStart();
+  const startDate = DateUtils.parseDate(challenge.startDate);
+  const totalTasks = challenge.tasks.length;
+
+  container.innerHTML = `
+    <!-- Preview Mode Badge -->
+    <div style="text-align: center; margin-bottom: 1rem; padding: 0.75rem; background: var(--color-maroon-subtle); border: 1px solid var(--color-maroon); border-radius: var(--radius-md);">
+      <div style="font-size: 0.75rem; color: var(--color-maroon); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+        Preview Mode
+      </div>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
+
+      <!-- Countdown Card -->
+      <div class="card" style="padding: 0.75rem; display: flex; flex-direction: column; justify-content: space-between;">
+        <!-- Top: Countdown -->
+        <div style="text-align: center; margin-bottom: 0.5rem;">
+          <div style="font-size: 0.875rem; font-weight: 600; color: var(--color-text-tertiary);">
+            Starts in
+          </div>
+          <div style="font-size: 2rem; font-weight: 700; color: var(--color-text-primary); margin-top: 0.25rem;">
+            ${daysUntilStart}
+          </div>
+          <div style="font-size: 0.75rem; color: var(--color-text-tertiary);">
+            day${daysUntilStart !== 1 ? 's' : ''}
+          </div>
+        </div>
+
+        <!-- Middle: Muted Progress Grid -->
+        <div style="margin-bottom: 0.5rem;">
+          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;">
+            ${Array.from({ length: Math.min(challenge.totalDays, 35) }, (_, i) => {
+              return `
+                <div style="aspect-ratio: 1; background: var(--color-bg-tertiary);
+                  border-radius: 2px; opacity: 0.3;
+                  border: 1px solid var(--color-border-subtle);">
+                </div>
+              `;
+            }).join('')}
+          </div>
+          ${challenge.totalDays > 35 ? `
+            <div style="font-size: 0.6rem; color: var(--color-text-tertiary); text-align: center; margin-top: 0.25rem; opacity: 0.5;">
+              ${challenge.totalDays} days total
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Bottom: Start Date -->
+        <div style="text-align: center;">
+          <div style="font-size: 0.7rem; color: var(--color-text-secondary);">
+            ${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Card (Muted) -->
+      <div class="card" style="padding: 0.875rem; display: flex; align-items: center; justify-content: center; position: relative; opacity: 0.4;">
+        <svg width="120" height="120" viewBox="0 0 120 120" style="transform: rotate(-90deg);">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--color-bg-tertiary)" stroke-width="8"/>
+        </svg>
+        <div style="position: absolute; text-align: center;">
+          <div style="font-size: 1.75rem; font-weight: 700; line-height: 1; color: var(--color-text-tertiary);">
+            0%
+          </div>
+          <div style="font-size: 0.65rem; color: var(--color-text-tertiary); margin-top: 0.25rem;">
+            0/${totalTasks}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tasks Preview -->
+    <div style="margin-bottom: 1.5rem;">
+      <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+        Daily Tasks Preview
+      </div>
+      ${challenge.tasks.map((task, index) => {
+        return `
+          <div class="card" style="margin-bottom: 0.5rem; padding: 0.625rem; opacity: 0.6; cursor: not-allowed;">
+            <div style="display: flex; align-items: center; gap: 0.625rem;">
+              <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); flex-shrink: 0;
+                background: var(--color-bg-tertiary);
+                border: 2px solid var(--color-border);
+                display: flex; align-items: center; justify-content: center;
+                font-size: 1.125rem;">
+                ${task.emoji}
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; font-size: 0.875rem; line-height: 1.3;">
+                  ${task.name}
+                </div>
+                ${task.description ? `
+                  <div class="text-secondary" style="font-size: 0.7rem; margin-top: 0.125rem; line-height: 1.3;">
+                    ${task.description}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    <!-- Edit Button -->
+    <button class="btn-secondary" onclick="switchTab('setup')">
+      <span>Edit Challenge</span>
+    </button>
   `;
 }
 
@@ -888,20 +1108,35 @@ function renderArchiveDetail(archivedChallenge) {
 function renderSettingsTab() {
   const container = document.getElementById('settings-content');
   const challenge = Store.getChallenge();
+  const status = Store.getChallengeStatus();
 
   container.innerHTML = `
     <div class="card mb-lg">
       <h3 style="margin-bottom: 1rem; font-size: 1.25rem;">Challenge Management</h3>
 
-      ${challenge ? `
+      ${challenge && status === 'pending' ? `
+        <button class="btn-secondary mb-md" onclick="switchTab('setup')">
+          <span>✏️ Edit Challenge</span>
+        </button>
+        <p class="text-secondary" style="font-size: 0.875rem; margin-bottom: 1rem;">
+          Your challenge hasn't started yet. You can still make changes.
+        </p>
+        <button class="btn-secondary mb-md" onclick="confirmDeletePending()"
+          style="border-color: var(--color-maroon); color: var(--color-maroon);">
+          <span>Delete Pending Challenge</span>
+        </button>
+        <p class="text-secondary" style="font-size: 0.875rem;">
+          Remove this challenge without archiving.
+        </p>
+      ` : challenge && status === 'active' ? `
         <button class="btn-secondary mb-md" onclick="confirmUnlock()">
-          <span>🔓 Unlock & Archive Challenge</span>
+          <span>📦 Archive Challenge</span>
         </button>
         <p class="text-secondary" style="font-size: 0.875rem; margin-bottom: 1rem;">
           Archive your current challenge and start a new one. Your progress will be saved.
         </p>
       ` : `
-        <p class="text-secondary">No active challenge</p>
+        <p class="text-secondary">No challenge created</p>
       `}
     </div>
 
@@ -917,7 +1152,7 @@ function renderSettingsTab() {
     </div>
 
     <div class="text-center text-secondary" style="margin-top: 3rem;">
-      <p style="font-size: 0.875rem;">Challenge Tracker v1.0</p>
+      <p style="font-size: 0.875rem;">Challenge Tracker v2.0</p>
       <p style="font-size: 0.75rem; margin-top: 0.5rem;">Built for excellence</p>
     </div>
   `;
@@ -926,6 +1161,14 @@ function renderSettingsTab() {
 function confirmUnlock() {
   if (confirm('Archive this challenge and start fresh? Your progress will be saved in the archive.')) {
     Store.archiveChallenge();
+    currentDayIndex = 0;
+    switchTab('setup');
+  }
+}
+
+function confirmDeletePending() {
+  if (confirm('Delete this pending challenge? This cannot be undone.')) {
+    Store.clearAll();
     currentDayIndex = 0;
     switchTab('setup');
   }
