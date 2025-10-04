@@ -1,4 +1,4 @@
-const CACHE_NAME = 'challenge-tracker-v4';
+const CACHE_NAME = 'challenge-tracker-v5';
 const urlsToCache = [
   '/',
   '/index.html',
