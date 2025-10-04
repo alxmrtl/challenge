@@ -244,20 +244,8 @@ function renderChallengeForm(challenge, isEditing) {
         </div>
       ` : ''}
 
-      <button type="submit" class="btn-primary mb-lg" id="start-btn" ${!isEditing ? 'disabled' : ''}>
-        <span>${isEditing ? 'Save Changes' : 'Create Challenge'}</span>
-      </button>
-
-      <div class="input-group" style="margin-bottom: 1rem;">
-        <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.375rem;">Start Date</label>
-        <input type="date" id="input-start-date" class="input-field"
-          value="${challenge?.startDate || today}"
-          min="${today}"
-          style="padding: 0.5rem; font-size: 0.75rem; text-align: center; font-weight: 600;">
-        <p class="text-secondary" style="font-size: 0.65rem; margin-top: 0.375rem;">Begin</p>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+        <!-- Row 1, Col 1: Duration -->
         <div class="input-group" style="margin-bottom: 0;">
           <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.375rem;">Duration</label>
           <div class="input-number" style="padding: 0.375rem;">
@@ -269,6 +257,7 @@ function renderChallengeForm(challenge, isEditing) {
           <p class="text-secondary" style="font-size: 0.65rem; margin-top: 0.375rem;">Days</p>
         </div>
 
+        <!-- Row 1, Col 2: Threshold -->
         <div class="input-group" style="margin-bottom: 0;">
           <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.375rem;">Threshold</label>
           <div class="input-number" style="padding: 0.375rem;">
@@ -278,6 +267,21 @@ function renderChallengeForm(challenge, isEditing) {
             <button type="button" onclick="adjustThreshold(1)" style="width: 32px; height: 32px; font-size: 1rem;">+</button>
           </div>
           <p class="text-secondary" style="font-size: 0.65rem; margin-top: 0.375rem;">Tasks/pt</p>
+        </div>
+
+        <!-- Row 2, Col 1: Create Button -->
+        <button type="submit" class="btn-primary" id="start-btn" ${!isEditing ? 'disabled' : ''}>
+          <span>${isEditing ? 'Save' : 'Create'}</span>
+        </button>
+
+        <!-- Row 2, Col 2: Start Date -->
+        <div class="input-group" style="margin-bottom: 0;">
+          <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.375rem;">Start Date</label>
+          <input type="date" id="input-start-date" class="input-field"
+            value="${challenge?.startDate || today}"
+            min="${today}"
+            style="padding: 0.5rem; font-size: 0.75rem; text-align: center; font-weight: 600;">
+          <p class="text-secondary" style="font-size: 0.65rem; margin-top: 0.375rem;">Begin</p>
         </div>
       </div>
 
