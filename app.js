@@ -1192,33 +1192,29 @@ function confirmClearAll() {
 document.addEventListener('DOMContentLoaded', () => {
   // Register service worker with update handling
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(registration => {
-        // Check for updates periodically
-        setInterval(() => {
-          registration.update();
-        }, 60000); // Check every minute
-
-        // Handle updates
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available
-              if (confirm('New version available! Reload to update?')) {
-                newWorker.postMessage({ type: 'SKIP_WAITING' });
-                window.location.reload();
-              }
-            }
-          });
-        });
-      })
-      .catch(err => console.log('Service worker registration failed:', err));
+    let refreshing = false;
 
     // Reload when new service worker takes over
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      window.location.reload();
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
     });
+
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('Service Worker registered');
+
+        // Check for updates every 30 seconds
+        setInterval(() => {
+          registration.update();
+        }, 30000);
+
+        // Check immediately
+        registration.update();
+      })
+      .catch(err => console.error('Service worker registration failed:', err));
   }
 
   // Setup navigation
