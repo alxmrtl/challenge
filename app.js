@@ -244,20 +244,17 @@ function renderChallengeForm(challenge, isEditing) {
         </div>
       ` : ''}
 
-      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
-        <button type="submit" class="btn-primary" id="start-btn" ${!isEditing ? 'disabled' : ''}
-          style="grid-column: 1 / 2;">
-          <span>${isEditing ? 'Save Changes' : 'Create Challenge'}</span>
-        </button>
+      <button type="submit" class="btn-primary mb-lg" id="start-btn" ${!isEditing ? 'disabled' : ''}>
+        <span>${isEditing ? 'Save Changes' : 'Create Challenge'}</span>
+      </button>
 
-        <div class="input-group" style="margin-bottom: 0;">
-          <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.375rem;">Start Date</label>
-          <input type="date" id="input-start-date" class="input-field"
-            value="${challenge?.startDate || today}"
-            min="${today}"
-            style="padding: 0.5rem; font-size: 0.75rem; text-align: center; font-weight: 600;">
-          <p class="text-secondary" style="font-size: 0.65rem; margin-top: 0.375rem;">Begin</p>
-        </div>
+      <div class="input-group" style="margin-bottom: 1rem;">
+        <label class="input-label" style="font-size: 0.7rem; margin-bottom: 0.375rem;">Start Date</label>
+        <input type="date" id="input-start-date" class="input-field"
+          value="${challenge?.startDate || today}"
+          min="${today}"
+          style="padding: 0.5rem; font-size: 0.75rem; text-align: center; font-weight: 600;">
+        <p class="text-secondary" style="font-size: 0.65rem; margin-top: 0.375rem;">Begin</p>
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
