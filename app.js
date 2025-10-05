@@ -190,53 +190,50 @@ function renderSetupTab() {
   const challenge = Store.getChallenge();
   const status = Store.getChallengeStatus();
 
+  // Add title bar
+  const titleBar = `
+    <div style="background: linear-gradient(135deg, var(--color-maroon) 0%, var(--color-gold) 100%);
+      padding: 0.5rem; border-radius: var(--radius-md); text-align: center;
+      color: white; font-weight: 700; font-size: 0.875rem; letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;">
+      SETUP
+    </div>
+  `;
+
   if (challenge && status === 'active') {
-    // Active challenge - locked, show summary
-    container.innerHTML = `
-      <div class="card">
-        <h2 style="margin-bottom: 1rem; font-size: 1.5rem;">Active Challenge</h2>
-        <p class="text-secondary mb-md">${challenge.totalDays} days • ${challenge.tasks.length} tasks • Started ${DateUtils.formatDisplay(challenge.startDate)}</p>
-
-        <div style="margin-top: 1.5rem;">
-          ${challenge.tasks.map(task => `
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
-              <span style="font-size: 1.5rem;">${task.emoji}</span>
-              <div>
-                <div style="font-weight: 600;">${task.name}</div>
-                <div class="text-secondary" style="font-size: 0.875rem;">${task.description}</div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-
-        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border);">
-          <p class="text-secondary" style="font-size: 0.875rem;">
-            Point earned when completing ${challenge.pointThreshold} of ${challenge.tasks.length} tasks daily
-          </p>
-        </div>
-      </div>
-
-      <div class="text-center text-secondary" style="margin-top: 2rem;">
-        <p>Challenge is active. Visit Settings to archive.</p>
-      </div>
-    `;
+    // Active challenge - allow editing (cosmetic only)
+    container.innerHTML = titleBar;
+    renderChallengeForm(challenge, true, true); // Pass isActive flag
   } else if (challenge && status === 'pending') {
-    // Pending challenge - can edit
-    renderChallengeForm(challenge, true);
+    // Pending challenge - can edit everything
+    container.innerHTML = titleBar;
+    renderChallengeForm(challenge, true, false);
   } else {
     // No challenge - show creation form
-    renderChallengeForm(null, false);
+    container.innerHTML = titleBar;
+    renderChallengeForm(null, false, false);
   }
 }
 
-function renderChallengeForm(challenge, isEditing) {
+function renderChallengeForm(challenge, isEditing, isActive = false) {
   const container = document.getElementById('setup-form');
   const today = DateUtils.toISODate(DateUtils.getToday());
   const daysUntilStart = challenge ? Store.getDaysUntilStart() : 0;
 
-  container.innerHTML = `
+  const formHtml = `
     <form id="challenge-form">
-      ${isEditing && daysUntilStart > 0 ? `
+      ${isActive ? `
+        <div style="text-align: center; margin-bottom: 0.75rem; padding: 0.5rem; background: var(--color-gold-light); border: 1px solid var(--color-gold); border-radius: var(--radius-md);">
+          <div style="font-size: 0.65rem; color: var(--color-maroon); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+            ⚠️ Editing Active Challenge
+          </div>
+        </div>
+        <div style="text-align: center; margin-bottom: 0.75rem; padding: 0.5rem; background: var(--color-bg-tertiary); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+          <div style="font-size: 0.6rem; color: var(--color-text-secondary);">
+            Changing daily goal will recalculate all past points
+          </div>
+        </div>
+      ` : isEditing && daysUntilStart > 0 ? `
         <div style="text-align: center; margin-bottom: 0.75rem; padding: 0.5rem; background: var(--color-maroon-subtle); border: 1px solid var(--color-maroon); border-radius: var(--radius-md);">
           <div style="font-size: 0.65rem; color: var(--color-maroon); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
             Starts in ${daysUntilStart} day${daysUntilStart !== 1 ? 's' : ''}
@@ -273,7 +270,8 @@ function renderChallengeForm(challenge, isEditing) {
               <input type="date" id="input-start-date"
                 value="${challenge?.startDate || today}"
                 min="${today}"
-                style="flex: 1; background: transparent; border: none; outline: none; padding: 0; font-size: 0.7rem; font-weight: 600; color: var(--color-text-primary); text-align: center; box-sizing: border-box;">
+                ${isActive ? 'disabled' : ''}
+                style="flex: 1; background: transparent; border: none; outline: none; padding: 0; font-size: 0.7rem; font-weight: 600; color: var(--color-text-primary); text-align: center; box-sizing: border-box; ${isActive ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
             </div>
           </div>
 
@@ -305,11 +303,11 @@ function renderChallengeForm(challenge, isEditing) {
                 Total days
               </div>
             </div>
-            <div class="input-number" style="padding: 0.25rem; height: 36px;">
-              <button type="button" onclick="adjustDays(-1)" style="width: 28px; height: 28px; font-size: 0.875rem;">−</button>
+            <div class="input-number" style="padding: 0.25rem; height: 36px; ${isActive ? 'opacity: 0.5;' : ''}">
+              <button type="button" onclick="adjustDays(-1)" ${isActive ? 'disabled' : ''} style="width: 28px; height: 28px; font-size: 0.875rem; ${isActive ? 'cursor: not-allowed;' : ''}">−</button>
               <input type="number" id="input-days" value="${challenge?.totalDays || 30}" min="1" max="365" readonly
                 style="font-size: 1rem; font-weight: 700;">
-              <button type="button" onclick="adjustDays(1)" style="width: 28px; height: 28px; font-size: 0.875rem;">+</button>
+              <button type="button" onclick="adjustDays(1)" ${isActive ? 'disabled' : ''} style="width: 28px; height: 28px; font-size: 0.875rem; ${isActive ? 'cursor: not-allowed;' : ''}">+</button>
             </div>
           </div>
 
@@ -347,6 +345,8 @@ function renderChallengeForm(challenge, isEditing) {
       </div>
     </form>
   `;
+
+  container.insertAdjacentHTML('beforeend', formHtml);
 
   // Populate existing tasks if editing
   if (challenge && challenge.tasks) {
@@ -569,8 +569,18 @@ function renderDailyTab() {
   const challenge = Store.getChallenge();
   const status = Store.getChallengeStatus();
 
+  // Add title bar
+  const titleBar = `
+    <div style="background: linear-gradient(135deg, var(--color-maroon) 0%, var(--color-gold) 100%);
+      padding: 0.5rem; border-radius: var(--radius-md); text-align: center;
+      color: white; font-weight: 700; font-size: 0.875rem; letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;">
+      TODAY
+    </div>
+  `;
+
   if (!challenge) {
-    container.innerHTML = `
+    container.innerHTML = titleBar + `
       <div class="text-center" style="margin-top: 4rem;">
         <p class="text-secondary">No challenge created</p>
         <button class="btn-primary mt-lg" onclick="switchTab('setup')" style="max-width: 200px; margin: 1.5rem auto 0;">
@@ -582,9 +592,12 @@ function renderDailyTab() {
   }
 
   if (status === 'pending') {
+    container.innerHTML = titleBar;
     renderDailyTabPending(challenge);
     return;
   }
+
+  container.innerHTML = titleBar;
 
   // Ensure currentDayIndex is within bounds
   currentDayIndex = Math.max(0, Math.min(currentDayIndex, challenge.totalDays - 1));
@@ -599,7 +612,7 @@ function renderDailyTab() {
   const currentDate = new Date(startDate);
   currentDate.setDate(startDate.getDate() + currentDayIndex);
 
-  container.innerHTML = `
+  const contentHtml = `
     <!-- Dashboard Grid -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
 
@@ -672,37 +685,37 @@ function renderDailyTab() {
       </div>
 
       <!-- Progress Card -->
-      <div class="card" style="padding: 0.875rem; display: flex; align-items: center; justify-content: center; position: relative;">
-        <svg width="120" height="120" viewBox="0 0 120 120" style="transform: rotate(-90deg);">
-          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--color-bg-tertiary)" stroke-width="8"/>
-          <circle cx="60" cy="60" r="50" fill="none"
-            stroke="url(#progressGradient)"
-            stroke-width="8"
-            stroke-linecap="round"
-            stroke-dasharray="${2 * Math.PI * 50}"
-            stroke-dashoffset="${2 * Math.PI * 50 * (1 - progressPercent / 100)}"
-            style="transition: stroke-dashoffset 0.5s ease;"/>
-          <defs>
-            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color: var(--color-maroon); stop-opacity: 1" />
-              <stop offset="100%" style="stop-color: var(--color-gold); stop-opacity: 1" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <div style="position: absolute; text-align: center;">
-          ${pointEarned ? `
-            <div style="font-size: 0.6rem; color: var(--color-gold); font-weight: 600; margin-bottom: 0.25rem;">
-              ⭐ POINT
+      <div class="card" style="padding: 0.875rem; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+        <div style="position: relative; display: flex; align-items: center; justify-content: center;">
+          <svg width="120" height="120" viewBox="0 0 120 120" style="transform: rotate(-90deg);">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--color-bg-tertiary)" stroke-width="8"/>
+            <circle cx="60" cy="60" r="50" fill="none"
+              stroke="url(#progressGradient)"
+              stroke-width="8"
+              stroke-linecap="round"
+              stroke-dasharray="${2 * Math.PI * 50}"
+              stroke-dashoffset="${2 * Math.PI * 50 * (1 - progressPercent / 100)}"
+              style="transition: stroke-dashoffset 0.5s ease;"/>
+            <defs>
+              <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color: var(--color-maroon); stop-opacity: 1" />
+                <stop offset="100%" style="stop-color: var(--color-gold); stop-opacity: 1" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div style="position: absolute; text-align: center;">
+            <div style="font-size: 1.75rem; font-weight: 700; line-height: 1;
+              background: linear-gradient(135deg, var(--color-maroon) 0%, var(--color-gold) 100%);
+              -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+              ${Math.round(progressPercent)}%
             </div>
-          ` : ''}
-          <div style="font-size: 1.75rem; font-weight: 700; line-height: 1;
-            background: linear-gradient(135deg, var(--color-maroon) 0%, var(--color-gold) 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-            ${Math.round(progressPercent)}%
+            <div style="font-size: 0.65rem; color: var(--color-text-tertiary); margin-top: 0.25rem;">
+              ${completedCount}/${totalTasks}
+            </div>
           </div>
-          <div style="font-size: 0.65rem; color: var(--color-text-tertiary); margin-top: 0.25rem;">
-            ${completedCount}/${totalTasks}
-          </div>
+        </div>
+        <div style="font-size: 0.65rem; margin-top: 0.5rem; text-align: center; ${pointEarned ? 'font-weight: 700; color: var(--color-gold);' : 'font-weight: 400; color: var(--color-text-tertiary);'}">
+          ${pointEarned ? challenge.pointReward : 0} point${pointEarned && challenge.pointReward !== 1 ? 's' : ''} earned today
         </div>
       </div>
     </div>
@@ -740,15 +753,16 @@ function renderDailyTab() {
       }).join('')}
     </div>
   `;
+
+  container.insertAdjacentHTML('beforeend', contentHtml);
 }
 
 function renderDailyTabPending(challenge) {
-  const container = document.getElementById('daily-content');
   const daysUntilStart = Store.getDaysUntilStart();
   const startDate = DateUtils.parseDate(challenge.startDate);
   const totalTasks = challenge.tasks.length;
 
-  container.innerHTML = `
+  const contentHtml = `
     <!-- Preview Mode Badge -->
     <div style="text-align: center; margin-bottom: 1rem; padding: 0.75rem; background: var(--color-maroon-subtle); border: 1px solid var(--color-maroon); border-radius: var(--radius-md);">
       <div style="font-size: 0.75rem; color: var(--color-maroon); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
@@ -854,6 +868,8 @@ function renderDailyTabPending(challenge) {
       <span>Edit Challenge</span>
     </button>
   `;
+
+  document.getElementById('daily-content').insertAdjacentHTML('beforeend', contentHtml);
 }
 
 function navigateDay(delta) {
@@ -884,13 +900,24 @@ function renderStatsTab() {
   const challenge = Store.getChallenge();
   const archive = Store.getArchive();
 
+  // Add title bar
+  const titleBar = `
+    <div style="background: linear-gradient(135deg, var(--color-maroon) 0%, var(--color-gold) 100%);
+      padding: 0.5rem; border-radius: var(--radius-md); text-align: center;
+      color: white; font-weight: 700; font-size: 0.875rem; letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;">
+      STATS
+    </div>
+  `;
+
   if (currentArchiveIndex !== null) {
+    container.innerHTML = titleBar;
     renderArchiveDetail(archive[currentArchiveIndex]);
     return;
   }
 
   if (!challenge && archive.length === 0) {
-    container.innerHTML = `
+    container.innerHTML = titleBar + `
       <div class="text-center" style="margin-top: 4rem;">
         <p class="text-secondary">No challenge data available</p>
       </div>
@@ -898,7 +925,7 @@ function renderStatsTab() {
     return;
   }
 
-  let html = '';
+  let html = titleBar;
 
   // Active Challenge Stats
   if (challenge) {
@@ -1047,7 +1074,6 @@ function viewArchive(index) {
 }
 
 function renderArchiveDetail(archivedChallenge) {
-  const container = document.getElementById('stats-content');
   const completions = archivedChallenge.completions || {};
   const totalDays = archivedChallenge.totalDays;
 
@@ -1070,7 +1096,7 @@ function renderArchiveDetail(archivedChallenge) {
     ? Math.round((totalTasksCompleted / totalPossibleTasks) * 100)
     : 0;
 
-  container.innerHTML = `
+  const contentHtml = `
     <button class="btn-secondary mb-lg" onclick="currentArchiveIndex = null; renderStatsTab();">
       <span>← Back to Stats</span>
     </button>
@@ -1168,6 +1194,8 @@ function renderArchiveDetail(archivedChallenge) {
       </div>
     </div>
   `;
+
+  document.getElementById('stats-content').insertAdjacentHTML('beforeend', contentHtml);
 }
 
 // ==================== Settings Tab ====================
@@ -1177,6 +1205,14 @@ function renderSettingsTab() {
   const status = Store.getChallengeStatus();
 
   container.innerHTML = `
+    <div style="background: linear-gradient(135deg, var(--color-maroon) 0%, var(--color-gold) 100%);
+      padding: 0.5rem; border-radius: var(--radius-md); text-align: center;
+      color: white; font-weight: 700; font-size: 0.875rem; letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;">
+      SETTINGS
+    </div>
+
+
     <div class="card mb-lg">
       <h3 style="margin-bottom: 1rem; font-size: 1.25rem;">Challenge Management</h3>
 
