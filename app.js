@@ -144,6 +144,7 @@ const Store = {
 let currentTab = 'setup';
 let currentDayIndex = 0;
 let currentArchiveIndex = null;
+let isEditingActiveChallenge = false;
 
 // ==================== Navigation ====================
 function switchTab(tabName) {
@@ -201,9 +202,13 @@ function renderSetupTab() {
   `;
 
   if (challenge && status === 'active') {
-    // Active challenge - allow editing (cosmetic only)
+    // Active challenge - show summary or edit form based on state
     container.innerHTML = titleBar;
-    renderChallengeForm(challenge, true, true); // Pass isActive flag
+    if (isEditingActiveChallenge) {
+      renderChallengeForm(challenge, true, true); // Pass isActive flag
+    } else {
+      renderActiveChallengeReadOnly(challenge);
+    }
   } else if (challenge && status === 'pending') {
     // Pending challenge - can edit everything
     container.innerHTML = titleBar;
@@ -215,6 +220,55 @@ function renderSetupTab() {
   }
 }
 
+function renderActiveChallengeReadOnly(challenge) {
+  const contentHtml = `
+    <div class="card">
+      <div style="margin-bottom: 1.5rem;">
+        <p class="text-secondary" style="font-size: 0.875rem;">
+          ${challenge.totalDays} days • ${challenge.tasks.length} tasks • Started ${DateUtils.formatDisplay(challenge.startDate)}
+        </p>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        ${challenge.tasks.map(task => `
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <span style="font-size: 1.5rem;">${task.emoji}</span>
+            <div>
+              <div style="font-weight: 600;">${task.name}</div>
+              <div class="text-secondary" style="font-size: 0.875rem;">${task.description}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="padding-top: 1.5rem; border-top: 1px solid var(--color-border); margin-bottom: 1.5rem;">
+        <p class="text-secondary" style="font-size: 0.875rem;">
+          Point earned when completing ${challenge.pointThreshold} of ${challenge.tasks.length} tasks daily
+        </p>
+        <p class="text-secondary" style="font-size: 0.875rem; margin-top: 0.5rem;">
+          ${challenge.pointReward} point${challenge.pointReward !== 1 ? 's' : ''} per day
+        </p>
+      </div>
+
+      <button class="btn-primary" onclick="startEditingActiveChallenge()">
+        <span>Edit Challenge</span>
+      </button>
+    </div>
+  `;
+
+  document.getElementById('setup-form').insertAdjacentHTML('beforeend', contentHtml);
+}
+
+function startEditingActiveChallenge() {
+  isEditingActiveChallenge = true;
+  renderSetupTab();
+}
+
+function cancelEditingActiveChallenge() {
+  isEditingActiveChallenge = false;
+  renderSetupTab();
+}
+
 function renderChallengeForm(challenge, isEditing, isActive = false) {
   const container = document.getElementById('setup-form');
   const today = DateUtils.toISODate(DateUtils.getToday());
@@ -222,18 +276,7 @@ function renderChallengeForm(challenge, isEditing, isActive = false) {
 
   const formHtml = `
     <form id="challenge-form">
-      ${isActive ? `
-        <div style="text-align: center; margin-bottom: 0.75rem; padding: 0.5rem; background: var(--color-gold-light); border: 1px solid var(--color-gold); border-radius: var(--radius-md);">
-          <div style="font-size: 0.65rem; color: var(--color-maroon); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
-            ⚠️ Editing Active Challenge
-          </div>
-        </div>
-        <div style="text-align: center; margin-bottom: 0.75rem; padding: 0.5rem; background: var(--color-bg-tertiary); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
-          <div style="font-size: 0.6rem; color: var(--color-text-secondary);">
-            Changing daily goal will recalculate all past points
-          </div>
-        </div>
-      ` : isEditing && daysUntilStart > 0 ? `
+      ${isEditing && daysUntilStart > 0 ? `
         <div style="text-align: center; margin-bottom: 0.75rem; padding: 0.5rem; background: var(--color-maroon-subtle); border: 1px solid var(--color-maroon); border-radius: var(--radius-md);">
           <div style="font-size: 0.65rem; color: var(--color-maroon); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
             Starts in ${daysUntilStart} day${daysUntilStart !== 1 ? 's' : ''}
@@ -242,10 +285,18 @@ function renderChallengeForm(challenge, isEditing, isActive = false) {
       ` : ''}
 
       <!-- Start Challenge Button - Outside Grid -->
-      <button type="submit" class="btn-primary mb-md" id="start-btn" ${!isEditing ? 'disabled' : ''}
-        style="padding: 0.625rem; font-size: 0.875rem;">
-        <span>${isEditing ? 'Save Changes' : 'Start Challenge'}</span>
-      </button>
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+        ${isActive ? `
+          <button type="button" class="btn-secondary" onclick="cancelEditingActiveChallenge()"
+            style="padding: 0.625rem; font-size: 0.875rem; flex: 1;">
+            <span>Cancel</span>
+          </button>
+        ` : ''}
+        <button type="submit" class="btn-primary" id="start-btn" ${!isEditing ? 'disabled' : ''}
+          style="padding: 0.625rem; font-size: 0.875rem; ${isActive ? 'flex: 1;' : 'width: 100%;'}">
+          <span>${isEditing ? 'Save Changes' : 'Start Challenge'}</span>
+        </button>
+      </div>
 
       <!-- Challenge Settings Section -->
       <div style="margin-bottom: 1.25rem;">
@@ -495,7 +546,8 @@ function handleChallengeSubmit(e) {
   Store.saveChallenge(challenge);
   currentDayIndex = 0;
 
-  // Switch to daily view
+  // Reset editing state and switch to daily view
+  isEditingActiveChallenge = false;
   switchTab('daily');
 }
 
@@ -950,8 +1002,6 @@ function renderStatsTab() {
 
     html += `
       <div class="card mb-lg">
-        <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;">Active Challenge</h2>
-
         <!-- Points Display -->
         <div style="display: flex; justify-content: space-around; margin-bottom: 2rem;
           padding: 1.5rem; background: var(--color-bg-tertiary); border-radius: var(--radius-md);">
@@ -1022,7 +1072,6 @@ function renderStatsTab() {
   if (archive.length > 0) {
     html += `
       <div>
-        <h2 style="margin-bottom: 1rem; font-size: 1.5rem;">Archive</h2>
         ${archive.map((archivedChallenge, index) => {
           const totalDays = archivedChallenge.totalDays;
           const completions = archivedChallenge.completions || {};
@@ -1102,10 +1151,6 @@ function renderArchiveDetail(archivedChallenge) {
     </button>
 
     <div class="card mb-lg">
-      <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;">
-        ${totalDays} Day Challenge
-      </h2>
-
       <div style="display: flex; justify-content: space-around; margin-bottom: 2rem;
         padding: 1.5rem; background: var(--color-bg-tertiary); border-radius: var(--radius-md);">
         <div class="text-center">
